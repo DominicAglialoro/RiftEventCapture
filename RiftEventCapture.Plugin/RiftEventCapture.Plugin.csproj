@@ -56,8 +56,6 @@
         </Reference>
         <Reference Include="System" />
         <Reference Include="System.Core" />
-        <Reference Include="System.Data" />
-        <Reference Include="System.Xml" />
         <Reference Include="TicToc.ObjectPooling.Runtime">
           <HintPath>C:\Program Files (x86)\Steam\steamapps\common\RiftOfTheNecroDancerOSTVolume1\RiftOfTheNecroDancer_Data\Managed\TicToc.ObjectPooling.Runtime.dll</HintPath>
             <Private>false</Private>

@@ -40,6 +40,7 @@ public class CaptureResult {
             writer.Write(riftEvent.TargetTime.Time);
             writer.Write(riftEvent.TargetTime.Beat);
             writer.Write((int) riftEvent.EnemyType);
+            writer.Write(riftEvent.Column);
             writer.Write(riftEvent.TotalScore);
             writer.Write(riftEvent.BaseScore);
             writer.Write(riftEvent.BaseMultiplier);

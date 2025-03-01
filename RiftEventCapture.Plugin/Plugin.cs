@@ -130,13 +130,17 @@ internal class Plugin : BaseUnityPlugin {
 
         var result = currentSession.Complete();
         string name = $"{result.Metadata.Name}_{result.Metadata.Difficulty}";
+        string directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RiftEventCapture");
+
+        Directory.CreateDirectory(directory);
+
         string path;
         int num = 0;
 
         do {
-            path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RiftEventCapture", $"{name}_{num}.bin");
+            path = Path.Combine(directory, $"{name}_{num}.bin");
             num++;
-        } while (!File.Exists(path));
+        } while (File.Exists(path));
 
         result.SaveToFile(path);
         Logger.LogInfo($"Saved capture result to {path}");
@@ -172,9 +176,11 @@ internal class Plugin : BaseUnityPlugin {
         cursor.EmitCall(OnVibeChainSuccessFromWyrmKill);
     }
 
-    private static void RRWyrmEnemy_ScoreHoldSegment(Func<RRWyrmEnemy, bool> scoreHoldSegment, RRWyrmEnemy rrWyrmEnemy) {
-        if (!scoreHoldSegment(rrWyrmEnemy) || !TryGetCurrentSession(stageController))
-            return;
+    private static bool RRWyrmEnemy_ScoreHoldSegment(Func<RRWyrmEnemy, bool> scoreHoldSegment, RRWyrmEnemy rrWyrmEnemy) {
+        bool result = scoreHoldSegment(rrWyrmEnemy);
+
+        if (!result || !TryGetCurrentSession(stageController))
+            return result;
 
         var timestamp = currentSession.BeatData.GetTimestampFromBeat(rrWyrmEnemy.TargetHitBeatNumber + rrWyrmEnemy._holdSegmentsScored);
 
@@ -191,16 +197,18 @@ internal class Plugin : BaseUnityPlugin {
             0,
             rrWyrmEnemy.IsPartOfVibeChain
         ));
+
+        return true;
     }
 
-    private static void RRWyrmEnemy_PerformDeathBehavior(Action<RRWyrmEnemy> performDeathBehavior, RRWyrmEnemy rrWyrmEnemy) {
+    private static void RRWyrmEnemy_PerformDeathBehavior(Action<RRWyrmEnemy, FmodTimeCapsule, bool> performDeathBehavior, RRWyrmEnemy rrWyrmEnemy, FmodTimeCapsule fmodTimeCapsule, bool diedFromPlayerDamage) {
         if (!rrWyrmEnemy.IsBeingHeld || !TryGetCurrentSession(stageController)) {
-            performDeathBehavior(rrWyrmEnemy);
+            performDeathBehavior(rrWyrmEnemy, fmodTimeCapsule, diedFromPlayerDamage);
 
             return;
         }
 
-        performDeathBehavior(rrWyrmEnemy);
+        performDeathBehavior(rrWyrmEnemy, fmodTimeCapsule, diedFromPlayerDamage);
 
         var timestamp = currentSession.BeatData.GetTimestampFromBeat(rrWyrmEnemy.TargetHitBeatNumber + Math.Max(0, rrWyrmEnemy.EnemyLength - 1));
 
