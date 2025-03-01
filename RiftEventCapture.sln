@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiftEventCapture.Plugin", "RiftEventCapture.Plugin\RiftEventCapture.Plugin.csproj", "{845BF1E6-2D2B-474A-B17A-B5B0F94257A0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RiftEventCapture.Common", "RiftEventCapture.Common\RiftEventCapture.Common.csproj", "{1CF61334-7AD6-4EA7-98DE-58B8D67F9618}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{845BF1E6-2D2B-474A-B17A-B5B0F94257A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{845BF1E6-2D2B-474A-B17A-B5B0F94257A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{845BF1E6-2D2B-474A-B17A-B5B0F94257A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{845BF1E6-2D2B-474A-B17A-B5B0F94257A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CF61334-7AD6-4EA7-98DE-58B8D67F9618}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CF61334-7AD6-4EA7-98DE-58B8D67F9618}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CF61334-7AD6-4EA7-98DE-58B8D67F9618}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CF61334-7AD6-4EA7-98DE-58B8D67F9618}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
