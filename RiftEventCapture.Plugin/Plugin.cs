@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -8,6 +9,7 @@ using RhythmRift;
 using RhythmRift.Enemies;
 using RiftEventCapture.Common;
 using Shared;
+using Shared.Pins;
 using Shared.RhythmEngine;
 using Shared.SceneLoading.Payloads;
 
@@ -15,12 +17,19 @@ namespace RiftEventCapture.Plugin;
 
 [BepInPlugin("programmatic.riftEventCapture", "RiftEventCapture", "1.0.0.0")]
 internal class Plugin : BaseUnityPlugin {
+    public static ConfigEntry<bool> RecordNormalGameplay;
+    public static ConfigEntry<bool> RecordGoldenLuteGameplay;
+
     public new static ManualLogSource Logger { get; private set; }
 
+    private static bool shouldCaptureEvents;
     private static CaptureSession currentSession;
     private static RRStageController stageController;
 
     private void Awake() {
+        RecordNormalGameplay = Config.Bind("General", "RecordNormalGameplay", true, "Record events when playing a chart without the Golden Lute modifier enabled");
+        RecordGoldenLuteGameplay = Config.Bind("General", "RecordGoldenLuteGameplay", true, "Record events when playing a chart with the Golden Lute modifier enabled");
+
         Logger = base.Logger;
         Logger.LogInfo("Loaded RiftEventCapture");
 
@@ -36,7 +45,7 @@ internal class Plugin : BaseUnityPlugin {
         if (currentSession != null)
             return true;
 
-        if (rrStageController == null)
+        if (!shouldCaptureEvents || rrStageController == null || !(PinsController.IsPinActive("GoldenLute") ? RecordGoldenLuteGameplay.Value : RecordNormalGameplay.Value))
             return false;
 
         var beatmap = rrStageController.BeatmapPlayer._activeBeatmap;
@@ -112,10 +121,14 @@ internal class Plugin : BaseUnityPlugin {
         currentSession = null;
         stageController = rrStageController;
 
-        if (rrStageController._stageScenePayload is not RhythmRiftScenePayload)
+        if (rrStageController._stageScenePayload is not RhythmRiftScenePayload) {
+            shouldCaptureEvents = false;
+
             return;
+        }
 
         Logger.LogInfo($"Begin playing {rrStageController._stageFlowUiController._stageContextInfo.StageDisplayName}");
+        shouldCaptureEvents = true;
     }
 
     private static void RRStageController_ShowResultsScreen(Action<RRStageController, bool, float, int, bool, bool> showResultsScreen,
@@ -144,6 +157,7 @@ internal class Plugin : BaseUnityPlugin {
 
         result.SaveToFile(path);
         Logger.LogInfo($"Saved capture result to {path}");
+        shouldCaptureEvents = false;
         currentSession = null;
         stageController = null;
     }
