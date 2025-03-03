@@ -23,6 +23,7 @@ internal class Plugin : BaseUnityPlugin {
     public new static ManualLogSource Logger { get; private set; }
 
     private static bool shouldCaptureEvents;
+    private static SessionInfo sessionInfo;
     private static CaptureSession currentSession;
     private static RRStageController stageController;
 
@@ -53,11 +54,9 @@ internal class Plugin : BaseUnityPlugin {
         if (beatmap == null)
             return false;
 
-        var stageContextInfo = rrStageController._stageFlowUiController._stageContextInfo;
-        var metadata = new ChartMetadata(stageContextInfo.StageDisplayName, Util.GameDifficultyToCommonDifficulty(stageContextInfo.StageDifficulty));
         var beatData = new BeatData(beatmap.bpm, beatmap.beatDivisions, beatmap.BeatTimings.ToArray());
 
-        currentSession = CaptureSession.CreateNewSession(metadata, beatData);
+        currentSession = CaptureSession.CreateNewSession(sessionInfo, beatData);
 
         return true;
     }
@@ -121,7 +120,7 @@ internal class Plugin : BaseUnityPlugin {
         currentSession = null;
         stageController = rrStageController;
 
-        if (rrStageController._stageScenePayload is not RhythmRiftScenePayload) {
+        if (rrStageController._stageScenePayload is not RhythmRiftScenePayload payload || payload.IsPracticeMode || payload.IsChallenge || payload.IsDailyChallenge) {
             shouldCaptureEvents = false;
 
             return;
@@ -129,6 +128,15 @@ internal class Plugin : BaseUnityPlugin {
 
         Logger.LogInfo($"Begin playing {rrStageController._stageFlowUiController._stageContextInfo.StageDisplayName}");
         shouldCaptureEvents = true;
+
+        var stageContextInfo = rrStageController._stageFlowUiController._stageContextInfo;
+
+        sessionInfo = new SessionInfo(
+            stageContextInfo.StageDisplayName,
+            payload.GetLevelId(),
+            Util.GameDifficultyToCommonDifficulty(stageContextInfo.StageDifficulty),
+            (string[]) PinsController.GetActivePins().Clone());
+
     }
 
     private static void RRStageController_ShowResultsScreen(Action<RRStageController, bool, float, int, bool, bool> showResultsScreen,
@@ -136,13 +144,13 @@ internal class Plugin : BaseUnityPlugin {
         bool didNotFinish = false, bool cheatsDetected = false) {
         showResultsScreen(rrStageController, isNewHighScore, trackProgressPercentage, awardedDiamonds, didNotFinish, cheatsDetected);
 
-        if (currentSession == null || didNotFinish)
+        if (!shouldCaptureEvents || currentSession == null || didNotFinish)
             return;
 
         Logger.LogInfo("Completed stage");
 
         var result = currentSession.Complete();
-        string name = $"{result.Metadata.Name}_{result.Metadata.Difficulty}";
+        string name = $"{result.SessionInfo.ChartName}_{result.SessionInfo.ChartDifficulty}";
         string directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RiftEventCapture");
 
         Directory.CreateDirectory(directory);

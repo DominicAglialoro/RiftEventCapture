@@ -46,6 +46,7 @@ internal static class Util {
         3826 => EnemyType.HarpyRed,
         929 => EnemyType.Blademaster,
         3685 => EnemyType.BlademasterBlue,
+        7288 => EnemyType.BlademasterYellow,
         4601 => EnemyType.SkullWhite,
         3543 => EnemyType.SkullBlue,
         7685 => EnemyType.SkullRed,

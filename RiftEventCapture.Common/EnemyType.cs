@@ -27,6 +27,7 @@ public enum EnemyType {
     HarpyRed,
     Blademaster,
     BlademasterBlue,
+    BlademasterYellow,
     SkullWhite,
     SkullBlue,
     SkullRed,

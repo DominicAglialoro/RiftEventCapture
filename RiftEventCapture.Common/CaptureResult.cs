@@ -1,17 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace RiftEventCapture.Common;
 
 public class CaptureResult {
-    public ChartMetadata Metadata { get; }
+    private const string HEADER = "RIFT_EVENT_CAPTURE";
+    private const int FORMAT_VERSION = 0;
+
+    public SessionInfo SessionInfo { get; }
     public BeatData BeatData { get; }
     public IReadOnlyList<RiftEvent> RiftEvents => riftEvents;
 
-    private RiftEvent[] riftEvents;
+    private readonly RiftEvent[] riftEvents;
 
-    public CaptureResult(ChartMetadata metadata, BeatData beatData, RiftEvent[] riftEvents) {
-        Metadata = metadata;
+    public CaptureResult(SessionInfo sessionInfo, BeatData beatData, RiftEvent[] riftEvents) {
+        SessionInfo = sessionInfo;
         BeatData = beatData;
         this.riftEvents = riftEvents;
     }
@@ -19,8 +23,19 @@ public class CaptureResult {
     public void SaveToFile(string path) {
         using var writer = new BinaryWriter(File.Create(path));
 
-        writer.Write(Metadata.Name);
-        writer.Write((int) Metadata.Difficulty);
+        writer.Write(HEADER);
+        writer.Write(FORMAT_VERSION);
+        writer.Write(SessionInfo.ChartName);
+        writer.Write(SessionInfo.ChartID);
+        writer.Write((int) SessionInfo.ChartDifficulty);
+
+        var pins = SessionInfo.Pins;
+
+        writer.Write(pins.Count);
+
+        foreach (string pin in pins)
+            writer.Write(pin);
+
         writer.Write(BeatData.BPM);
         writer.Write(BeatData.BeatDivisions);
 
@@ -53,9 +68,26 @@ public class CaptureResult {
     public static CaptureResult LoadFromFile(string path) {
         using var reader = new BinaryReader(File.OpenRead(path));
 
-        string name = reader.ReadString();
-        int difficulty = reader.ReadInt32();
-        var metadata = new ChartMetadata(name, (Difficulty) difficulty);
+        string header = reader.ReadString();
+
+        if (header != HEADER)
+            throw new InvalidOperationException("Not a valid capture file");
+
+        int formatVersion = reader.ReadInt32();
+
+        if (formatVersion < 0 || formatVersion > FORMAT_VERSION)
+            throw new InvalidOperationException("Invalid version number");
+
+        string chartName = reader.ReadString();
+        string chartId = reader.ReadString();
+        int chartDifficulty = reader.ReadInt32();
+        int pinsCount = reader.ReadInt32();
+        string[] pins = new string[pinsCount];
+
+        for (int i = 0; i < pinsCount; i++)
+            pins[i] = reader.ReadString();
+
+        var sessionInfo = new SessionInfo(chartName, chartId, (Difficulty) chartDifficulty, pins);
         int bpm = reader.ReadInt32();
         int beatDivisions = reader.ReadInt32();
         int beatTimingsCount = reader.ReadInt32();
@@ -97,6 +129,6 @@ public class CaptureResult {
                 vibeChain);
         }
 
-        return new CaptureResult(metadata, beatData, riftEvents);
+        return new CaptureResult(sessionInfo, beatData, riftEvents);
     }
 }

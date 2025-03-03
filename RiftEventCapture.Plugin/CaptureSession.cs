@@ -7,8 +7,8 @@ namespace RiftEventCapture.Plugin;
 public class CaptureSession {
     public static event Action<CaptureSession> NewSession;
 
-    internal static CaptureSession CreateNewSession(ChartMetadata metadata, BeatData beatData) {
-        var session = new CaptureSession(metadata, beatData);
+    internal static CaptureSession CreateNewSession(SessionInfo sessionInfo, BeatData beatData) {
+        var session = new CaptureSession(sessionInfo, beatData);
 
         NewSession?.Invoke(session);
 
@@ -18,15 +18,15 @@ public class CaptureSession {
     public event Action<RiftEvent> EventCaptured;
     public event Action<CaptureResult> SessionCompleted;
 
-    public ChartMetadata Metadata { get; }
+    public SessionInfo SessionInfo { get; }
     public BeatData BeatData { get; }
     public IReadOnlyList<RiftEvent> RiftEvents => riftEvents;
 
     private readonly List<RiftEvent> riftEvents;
 
-    public CaptureSession(ChartMetadata metadata, BeatData beatData) {
-        Metadata = metadata;
+    public CaptureSession(SessionInfo sessionInfo, BeatData beatData) {
         BeatData = beatData;
+        SessionInfo = sessionInfo;
         riftEvents = new List<RiftEvent>();
     }
 
@@ -38,7 +38,7 @@ public class CaptureSession {
     public CaptureResult Complete() {
         riftEvents.Sort();
 
-        var result = new CaptureResult(Metadata, BeatData, riftEvents.ToArray());
+        var result = new CaptureResult(SessionInfo, BeatData, riftEvents.ToArray());
 
         SessionCompleted?.Invoke(result);
         EventCaptured = null;
