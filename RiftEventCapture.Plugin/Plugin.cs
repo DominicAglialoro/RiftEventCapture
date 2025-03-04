@@ -46,7 +46,7 @@ internal class Plugin : BaseUnityPlugin {
         if (currentSession != null)
             return true;
 
-        if (!shouldCaptureEvents || rrStageController == null || !(PinsController.IsPinActive("GoldenLute") ? RecordGoldenLuteGameplay.Value : RecordNormalGameplay.Value))
+        if (!shouldCaptureEvents || rrStageController == null)
             return false;
 
         var beatmap = rrStageController.BeatmapPlayer._activeBeatmap;
@@ -120,7 +120,8 @@ internal class Plugin : BaseUnityPlugin {
         currentSession = null;
         stageController = rrStageController;
 
-        if (rrStageController._stageScenePayload is not RhythmRiftScenePayload payload || payload.IsPracticeMode || payload.IsChallenge || payload.IsDailyChallenge) {
+        if (rrStageController._stageScenePayload is not RhythmRiftScenePayload payload || payload.IsPracticeMode || payload.IsChallenge || payload.IsDailyChallenge
+            || !(PinsController.IsPinActive("GoldenLute") ? RecordGoldenLuteGameplay.Value : RecordNormalGameplay.Value)) {
             shouldCaptureEvents = false;
 
             return;
@@ -173,7 +174,7 @@ internal class Plugin : BaseUnityPlugin {
     private static void RRStageController_ProcessHitData_IL(ILContext il) {
         var cursor = new ILCursor(il);
 
-        cursor.GotoNext(MoveType.After, instr => instr.MatchCall<StageInputRecord>(nameof(StageInputRecord.RecordInput)));
+        cursor.GotoNext(MoveType.After, instr => instr.MatchStloc(8));
 
         cursor.Emit(OpCodes.Ldarg_0);
         cursor.Emit(OpCodes.Ldloc_S, (byte) 6);
