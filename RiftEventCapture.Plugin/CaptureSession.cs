@@ -4,7 +4,7 @@ using RiftEventCapture.Common;
 
 namespace RiftEventCapture.Plugin;
 
-public class CaptureSession {
+public class CaptureSession : IDisposable {
     public static event Action<CaptureSession> NewSession;
 
     internal static CaptureSession CreateNewSession(SessionInfo sessionInfo, BeatData beatData) {
@@ -41,9 +41,13 @@ public class CaptureSession {
         var result = new CaptureResult(SessionInfo, BeatData, riftEvents.ToArray());
 
         SessionCompleted?.Invoke(result);
-        EventCaptured = null;
-        SessionCompleted = null;
+        Dispose();
 
         return result;
+    }
+
+    public void Dispose() {
+        EventCaptured = null;
+        SessionCompleted = null;
     }
 }

@@ -71,6 +71,8 @@ internal class Plugin : BaseUnityPlugin {
         var enemy = hitData.Enemy;
         var beatData = currentSession.BeatData;
 
+        // Logger.LogInfo($"Hit {Util.EnemyIdToType(enemy.EnemyTypeId)} at {hitData.TargetBeat:F}");
+
         currentSession.Capture(new RiftEvent(
             EventType.EnemyHit,
             beatData.GetTimestampFromBeat(hitData.InputBeat),
@@ -117,6 +119,7 @@ internal class Plugin : BaseUnityPlugin {
 
     private static void RRStageController_BeginPlay(Action<RRStageController> beginPlay, RRStageController rrStageController) {
         beginPlay(rrStageController);
+        currentSession?.Dispose();
         currentSession = null;
         stageController = rrStageController;
 
@@ -167,6 +170,7 @@ internal class Plugin : BaseUnityPlugin {
         result.SaveToFile(path);
         Logger.LogInfo($"Saved capture result to {path}");
         shouldCaptureEvents = false;
+        currentSession.Dispose();
         currentSession = null;
         stageController = null;
     }
@@ -207,6 +211,8 @@ internal class Plugin : BaseUnityPlugin {
 
         var timestamp = currentSession.BeatData.GetTimestampFromBeat(rrWyrmEnemy.TargetHitBeatNumber + rrWyrmEnemy._holdSegmentsScored);
 
+        // Logger.LogInfo($"Scored wyrm segment from {rrWyrmEnemy.TargetHitBeatNumber:F} to {rrWyrmEnemy.TargetHitBeatNumber + Math.Max(2, rrWyrmEnemy.EnemyLength) - 1:F} at {rrWyrmEnemy.TargetHitBeatNumber + rrWyrmEnemy._holdSegmentsScored:F}");
+
         currentSession.Capture(new RiftEvent(
             EventType.HoldSegment,
             timestamp,
@@ -233,7 +239,9 @@ internal class Plugin : BaseUnityPlugin {
 
         performDeathBehavior(rrWyrmEnemy, fmodTimeCapsule, diedFromPlayerDamage);
 
-        var timestamp = currentSession.BeatData.GetTimestampFromBeat(rrWyrmEnemy.TargetHitBeatNumber + Math.Max(0, rrWyrmEnemy.EnemyLength - 1));
+        var timestamp = currentSession.BeatData.GetTimestampFromBeat(rrWyrmEnemy.TargetHitBeatNumber + Math.Max(2, rrWyrmEnemy.EnemyLength) - 1);
+
+        // Logger.LogInfo($"Ended wyrm from {rrWyrmEnemy.TargetHitBeatNumber:F} to {rrWyrmEnemy.TargetHitBeatNumber + Math.Max(2, rrWyrmEnemy.EnemyLength) - 1:F}");
 
         currentSession.Capture(new RiftEvent(
             EventType.HoldComplete,
