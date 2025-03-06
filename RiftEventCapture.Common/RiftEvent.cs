@@ -35,6 +35,11 @@ public readonly struct RiftEvent : IComparable<RiftEvent> {
         if (timestampComparison != 0)
             return timestampComparison;
 
+        int eventTypeComparison = ((int) EventType).CompareTo((int) other.EventType);
+
+        if (eventTypeComparison != 0)
+            return eventTypeComparison;
+
         return Column.CompareTo(other.Column);
     }
 }

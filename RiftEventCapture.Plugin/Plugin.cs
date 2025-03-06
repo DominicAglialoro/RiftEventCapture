@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.IO;
 using BepInEx;
 using BepInEx.Configuration;
@@ -15,7 +16,7 @@ using Shared.SceneLoading.Payloads;
 
 namespace RiftEventCapture.Plugin;
 
-[BepInPlugin("programmatic.riftEventCapture", "RiftEventCapture", "1.0.0.0")]
+[BepInPlugin("programmatic.riftEventCapture", "RiftEventCapture", "1.0.3.0")]
 internal class Plugin : BaseUnityPlugin {
     public static ConfigEntry<bool> RecordNormalGameplay;
     public static ConfigEntry<bool> RecordGoldenLuteGameplay;
@@ -34,7 +35,7 @@ internal class Plugin : BaseUnityPlugin {
         Logger = base.Logger;
         Logger.LogInfo("Loaded RiftEventCapture");
 
-        typeof(RRStageController).CreateMethodHook(nameof(RRStageController.BeginPlay), RRStageController_BeginPlay);
+        typeof(RRStageController).CreateMethodHook(nameof(RRStageController.PlayStageIntro), RRStageController_PlayStageIntro);
         typeof(RRStageController).CreateMethodHook(nameof(RRStageController.ShowResultsScreen), RRStageController_ShowResultsScreen);
         typeof(RRStageController).CreateILHook(nameof(RRStageController.ProcessHitData), RRStageController_ProcessHitData_IL);
         typeof(RRStageController).CreateILHook(nameof(RRStageController.HandleKilledBoundEnemy), RRStageController_HandleKilledBoundEnemy_IL);
@@ -117,8 +118,7 @@ internal class Plugin : BaseUnityPlugin {
             true));
     }
 
-    private static void RRStageController_BeginPlay(Action<RRStageController> beginPlay, RRStageController rrStageController) {
-        beginPlay(rrStageController);
+    private static IEnumerator RRStageController_PlayStageIntro(Func<RRStageController, IEnumerator> playStageIntro, RRStageController rrStageController) {
         currentSession?.Dispose();
         currentSession = null;
         stageController = rrStageController;
@@ -127,7 +127,7 @@ internal class Plugin : BaseUnityPlugin {
             || !(PinsController.IsPinActive("GoldenLute") ? RecordGoldenLuteGameplay.Value : RecordNormalGameplay.Value)) {
             shouldCaptureEvents = false;
 
-            return;
+            return playStageIntro(rrStageController);
         }
 
         Logger.LogInfo($"Begin playing {rrStageController._stageFlowUiController._stageContextInfo.StageDisplayName}");
@@ -141,6 +141,7 @@ internal class Plugin : BaseUnityPlugin {
             Util.GameDifficultyToCommonDifficulty(stageContextInfo.StageDifficulty),
             (string[]) PinsController.GetActivePins().Clone());
 
+        return playStageIntro(rrStageController);
     }
 
     private static void RRStageController_ShowResultsScreen(Action<RRStageController, bool, float, int, bool, bool> showResultsScreen,
