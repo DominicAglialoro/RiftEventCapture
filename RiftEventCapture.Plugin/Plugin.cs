@@ -29,7 +29,7 @@ internal class Plugin : BaseUnityPlugin {
     private static RRStageController stageController;
 
     private void Awake() {
-        RecordNormalGameplay = Config.Bind("General", "RecordNormalGameplay", true, "Record events when playing a chart without the Golden Lute modifier enabled");
+        RecordNormalGameplay = Config.Bind("General", "RecordNormalGameplay", false, "Record events when playing a chart without the Golden Lute modifier enabled");
         RecordGoldenLuteGameplay = Config.Bind("General", "RecordGoldenLuteGameplay", true, "Record events when playing a chart with the Golden Lute modifier enabled");
 
         Logger = base.Logger;
@@ -157,16 +157,25 @@ internal class Plugin : BaseUnityPlugin {
         var result = currentSession.Complete();
         string name = $"{result.SessionInfo.ChartName}_{result.SessionInfo.ChartDifficulty}";
         string directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RiftEventCapture");
+        bool isGoldenLute = PinsController.IsPinActive("GoldenLute");
+
+        if (isGoldenLute)
+            directory = Path.Combine(directory, "GoldenLute");
 
         Directory.CreateDirectory(directory);
 
         string path;
-        int num = 0;
 
-        do {
-            path = Path.Combine(directory, $"{name}_{num}.bin");
-            num++;
-        } while (File.Exists(path));
+        if (isGoldenLute)
+            path = Path.Combine(directory, $"{name}.bin");
+        else {
+            int num = 0;
+
+            do {
+                path = Path.Combine(directory, $"{name}_{num}.bin");
+                num++;
+            } while (File.Exists(path));
+        }
 
         result.SaveToFile(path);
         Logger.LogInfo($"Saved capture result to {path}");
