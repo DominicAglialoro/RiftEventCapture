@@ -17,33 +17,40 @@ public class BeatData {
     }
 
     public double GetBeatFromTime(double time) {
+        if (double.IsPositiveInfinity(time))
+            return double.PositiveInfinity;
+
+        if (double.IsNegativeInfinity(time))
+            return double.NegativeInfinity;
+
         if (beatTimings.Length <= 1)
             return time / (60d / Math.Max(1, BPM)) + 1d;
 
-        for (int i = 0; i < beatTimings.Length - 1; i++) {
-            if (time >= beatTimings[i + 1])
-                continue;
+        int beatIndex = GetBeatIndexFromTime(time);
+        double previous = beatTimings[beatIndex];
+        double next = beatTimings[beatIndex + 1];
 
-            double previous = beatTimings[i];
-            double next = beatTimings[i + 1];
-
-            return i + 1 + (time - previous) / (next - previous);
-        }
-
-        double last = beatTimings[beatTimings.Length - 1];
-        double secondToLast = beatTimings[beatTimings.Length - 2];
-
-        return beatTimings.Length + (time - last) / (last - secondToLast);
+        return beatIndex + 1 + (time - previous) / (next - previous);
     }
 
     public double GetTimeFromBeat(double beat) {
-        if (beat <= 1d)
-            return beatTimings.Length > 0 ? beatTimings[0] : 0d;
+        if (double.IsPositiveInfinity(beat))
+            return double.PositiveInfinity;
+
+        if (double.IsNegativeInfinity(beat))
+            return double.NegativeInfinity;
 
         if (beatTimings.Length <= 1)
             return 60d / Math.Max(1, BPM) * (beat - 1d);
 
-        if ((int) beat < beatTimings.Length) {
+        if (beat <= 1d) {
+            double first = beatTimings[0];
+            double second = beatTimings[1];
+
+            return first - (second - first) * (1d - beat);
+        }
+
+        if (beat < beatTimings.Length) {
             double previous = beatTimings[(int) beat - 1];
             double next = beatTimings[(int) beat];
 
@@ -57,11 +64,15 @@ public class BeatData {
     }
 
     public double GetTimeFromBeat(int beat) {
-        if (beat <= 1)
-            return beatTimings.Length > 0 ? beatTimings[0] : 0d;
-
         if (beatTimings.Length <= 1)
             return 60d / Math.Max(1, BPM) * (beat - 1);
+
+        if (beat < 1) {
+            double first = beatTimings[0];
+            double second = beatTimings[1];
+
+            return first - (second - first) * (1 - beat);
+        }
 
         if (beat <= beatTimings.Length)
             return beatTimings[beat - 1];
@@ -80,12 +91,9 @@ public class BeatData {
         if (beatTimings.Length <= 1)
             return 60d / Math.Max(1, BPM);
 
-        for (int i = 0; i < beatTimings.Length - 1; i++) {
-            if (time < beatTimings[i + 1])
-                return beatTimings[i + 1] - beatTimings[i];
-        }
+        int beatIndex = GetBeatIndexFromTime(time);
 
-        return beatTimings[beatTimings.Length - 1] - beatTimings[beatTimings.Length - 2];
+        return beatTimings[beatIndex + 1] - beatTimings[beatIndex];
     }
 
     public double GetBeatLengthForBeat(int beat) {
@@ -99,5 +107,21 @@ public class BeatData {
             return beatTimings[beat] - beatTimings[beat - 1];
 
         return beatTimings[beatTimings.Length - 1] - beatTimings[beatTimings.Length - 2];
+    }
+
+    private int GetBeatIndexFromTime(double time) {
+        int min = 0;
+        int max = beatTimings.Length - 1;
+
+        while (max >= min) {
+            int mid = (min + max) / 2;
+
+            if (beatTimings[mid] > time)
+                max = mid - 1;
+            else
+                min = mid + 1;
+        }
+
+        return Math.Max(0, Math.Min(max, beatTimings.Length - 2));
     }
 }

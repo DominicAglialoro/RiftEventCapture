@@ -16,8 +16,10 @@ using Shared.SceneLoading.Payloads;
 
 namespace RiftEventCapture.Plugin;
 
-[BepInPlugin("programmatic.riftEventCapture", "RiftEventCapture", "1.0.3.0")]
+[BepInPlugin("programmatic.riftEventCapture", "RiftEventCapture", PLUGIN_VERSION)]
 internal class Plugin : BaseUnityPlugin {
+    public const string PLUGIN_VERSION = "1.0.4";
+
     public static ConfigEntry<bool> RecordNormalGameplay;
     public static ConfigEntry<bool> RecordGoldenLuteGameplay;
 
@@ -41,6 +43,7 @@ internal class Plugin : BaseUnityPlugin {
         typeof(RRStageController).CreateILHook(nameof(RRStageController.HandleKilledBoundEnemy), RRStageController_HandleKilledBoundEnemy_IL);
         typeof(RRWyrmEnemy).CreateMethodHook(nameof(RRWyrmEnemy.ScoreHoldSegment), RRWyrmEnemy_ScoreHoldSegment);
         typeof(RRWyrmEnemy).CreateMethodHook(nameof(RRWyrmEnemy.PerformDeathBehaviour), RRWyrmEnemy_PerformDeathBehavior);
+        // typeof(TrackSelectionSceneController).CreateMethodHook(nameof(TrackSelectionSceneController.Update), TrackSelectionSceneController_Update);
     }
 
     private static bool TryGetCurrentSession(RRStageController rrStageController) {
@@ -117,6 +120,53 @@ internal class Plugin : BaseUnityPlugin {
             0,
             true));
     }
+
+    // private static void PlayNextTrack() {
+    //     RRTrackMetaData metadata;
+    //
+    //     do {
+    //         if (currentTrackIndex >= trackMetaDatas.Length)
+    //             return;
+    //
+    //         metadata = trackMetaDatas[currentTrackIndex];
+    //         currentTrackIndex++;
+    //     } while (metadata.IsFiller || metadata.IsTutorial || metadata.IsPromo);
+    //
+    //     SongDatabase.Instance.TryGetEntryForLevelId(metadata.LevelId, out var songDatabaseData);
+    //
+    //     var returnScenePayload = ScriptableObject.CreateInstance<TrackSelectionScenePayload>();
+    //
+    //     returnScenePayload.SetDestinationScene("TrackSelection");
+    //     returnScenePayload.Initialize(metadata.LevelId, Difficulty.Impossible, TrackSortingOrder.IntensityAscending, false, false);
+    //     SceneLoadData.SetReturnScenePayload(returnScenePayload);
+    //
+    //     var sceneToLoadMetadata = new SceneLoadData.SceneToLoadMetaData() {
+    //         SceneName = "RhythmRift",
+    //         LevelId = songDatabaseData?.LevelId ?? string.Empty,
+    //         StageDifficulty = Difficulty.Impossible,
+    //         IsStoryMode = false,
+    //         IsCalibrationTest = false,
+    //         IsTutorial = false,
+    //         IsPracticeMode = false,
+    //         PracticeModeStartBeat = 0f,
+    //         PracticeModeEndBeat = 0f,
+    //         PracticeModeSpeedModifier = SpeedModifier.OneHundredPercent,
+    //         IsShopkeeperMode = false,
+    //         IsRemixMode = false,
+    //         CustomRemixSeed = string.Empty,
+    //         IsRandomSeed = false,
+    //         ShouldRewardDiamonds = true,
+    //         ShouldLevelBeLoaded = true,
+    //         RRIntroDialogueID = string.Empty,
+    //         RROutroDialogueID = string.Empty,
+    //         ShouldMuteCounterpartVO = false,
+    //         ShouldInvertCounterpartReactions = false
+    //     };
+    //
+    //     SceneLoadData.StageEntryType = RiftAnalyticsService.StageEntryType.StageSelectMenu;
+    //     SceneLoadData.QueueSceneLoadingMetaData(sceneToLoadMetadata);
+    //     SceneLoadingController.Instance.GoToScene(sceneToLoadMetadata);
+    // }
 
     private static IEnumerator RRStageController_PlayStageIntro(Func<RRStageController, IEnumerator> playStageIntro, RRStageController rrStageController) {
         currentSession?.Dispose();
@@ -267,4 +317,14 @@ internal class Plugin : BaseUnityPlugin {
             rrWyrmEnemy.IsPartOfVibeChain
         ));
     }
+
+    // private static void TrackSelectionSceneController_Update(Action<TrackSelectionSceneController> update, TrackSelectionSceneController trackSelectionSceneController) {
+    //     update(trackSelectionSceneController);
+    //
+    //     if (!Input.GetKeyDown(KeyCode.O))
+    //         return;
+    //
+    //     trackMetaDatas = trackSelectionSceneController._trackDatabase.GetTrackMetaDatas().Clone() as RRTrackMetaData[];
+    //     PlayNextTrack();
+    // }
 }
